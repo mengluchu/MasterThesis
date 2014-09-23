@@ -1,0 +1,126 @@
+---
+title: Introduction to bfast
+output: pdf_document
+---
+
+## Have a look at the dataset.
+## Learn about 'ts', 'xts' and 'zoo' time series types. Try the 'xts' and 'zoo' R package. Construct a time series.
+
+'ts' is a function for building time series objects in R.
+'xts' is an R package offering a number of functionalities to work on time-indexed data. 'xts' extends zoo, another popular package for time-series analysis. The main benefit of xts is its seamless compatibility with other packages using different timeseries classes (timeSeries, zoo, ...). In addition 'xts' allows the user to add custom attributes to any object.
+'zoo' is an R package that can handle irregular time series. Some type of data (in many cases high frequency data such as data from financial markets) is irregular so that the time between observations is not always the same.
+
+# Construct the first record of the file (the second line of your data) a time series (e.g. with meanevi)
+```{r}
+library(zoo)
+deter = read.csv("/home/christopher/Documents/Studium/Master Thesis/Orientation/sample.csv")
+dates = strsplit(as.vector(deter$dates), ';')
+dates = unlist(dates)
+dates = as.Date(dates, format="%Y-%m-%d")
+evi = strsplit(as.vector(deter$evi), ';')
+evi = as.numeric(unlist(evi))
+
+zoots = zoo(evi, dates, frequency=24)
+# check whether the time series is regular. If regular use ts(), if not zoo()
+isRegular = is.regular(zoots, strict = FALSE)
+isRegular
+plot(zoots, typ = "l")
+
+# dont use ts for not strict regular / not equispaced time series
+tsts = ts(evi, start = c(2000, 3), end = c(2012, 9), frequency = 24)
+plot(tsts)
+tsts_decom = decompose(tsts, type = "additive")
+plot(tsts_decom)
+```
+
+# Do the linear regression on the time series.
+```{r}
+lm = lm(evi ~ dates)
+plot(zoots)
+abline(lm)
+plot(lm)
+```
+
+# Decompose the time series into seasonality, trend and remainder with stl().
+```{r}
+na.new <- function(x) ts(na.exclude(x), frequency = 12)
+m<-na.exclude(zoots)
+m1<-time(m)
+m1-m1[-1]
+zoots_decom = stl(as.ts(zoots), na.action = na.new, s.window = "per")
+plot(zoots_decom)
+```
+
+# Interpret stl() result. 
+
+Decomposition procedures are used in time series to describe the trend and seasonal factors in a time series. One of the main objectives for a decomposition is to estimate seasonal effects that can be used to create and present seasonally adjusted values. A seasonally adjusted value removes the seasonal effect from a value so that trends can be seen more clearly. The additive decomposition model is useful when the seasonal variation is relatively constant over time. 
+ 
+The seasonal variation looked to be about the same magnitude across time, so an additive decomposition might be good. There is a major trend change from the year 2009 on. The seasonality is a very regularly repeating pattern.
+
+# Compute linear regression on seasonal trend and remainder component, respectively.
+
+```{r}
+str(zoots_decom)
+zoots_decom_seasonal = zoots_decom$time.series[,"seasonal"]
+plot(zoots_decom_seasonal)
+lm_seasonal = lm(zoots_decom_seasonal ~ dates)
+abline(lm_seasonal)
+
+zoots_decom_remainder = zoots_decom$time.series[,"remainder"]
+plot(zoots_decom_remainder)
+lm_remainder = lm(zoots_decom_remainder ~ dates)
+abline(lm_remainder)
+
+zoots_decom_trend = zoots_decom$time.series[,"trend"]
+plot(zoots_decom_trend,ylim=c(0,1.5))
+lm_trend = lm(zoots_decom_trend ~ dates)
+abline(lm_trend)
+```
+
+# Learn about bfast parameters.
+
+#### Yt
+univariate time series to be analyzed. This should be an object of class "ts" with a frequency greater than one without NA's.
+
+#### h
+minimal segment size between potentially detected breaks in the trend model given as fraction relative to the sample size (i.e. the minimal number of observations in each segment divided by the total length of the timeseries.
+
+#### season
+the seasonal model used to fit the seasonal component and detect seasonal breaks (i.e. significant phenological change). There are three options: "dummy", "harmonic", or "none" where "dummy" is the model proposed in the first Remote Sensing of Environment paper and "harmonic" is the model used in the second Remote Sensing of Environment paper (See paper for more details) and where "none" indicates that no seasonal model will be fitted (i.e. St = 0 ). If there is no seasonal cycle (e.g. frequency of the time series is 1) "none" can be selected to avoid fitting a seasonal model.
+
+#### max.iter
+maximum amount of iterations allowed for estimation of breakpoints in seasonal and trend component. 
+
+#### breaks
+integer specifying the maximal number of breaks to be calculated. By default the maximal number allowed by h is used.
+hpc	| A character specifying the high performance computing support. Default is "none", can be set to "foreach". Install the "foreach" package for hpc support.
+
+# Try to perform bfast on the time series.
+```{r}
+library(bfast)
+#tss = ts(rowSums(zoots_decom$time.series), start = c(2000, 3), end = c(2012, 3), frequency=24)
+#assign start, end and frequency
+#tsp(tss) = tsp(zoots_decom$time.series)
+
+# frequency = 365 / 16
+ts = ts(evi, start = c(2000, 6), frequency=23)
+length(ts)
+bf = bfast(ts, h=0.15, season="harmonic", max.iter=1)
+plot(bf)
+```
+# Interpret the bfast result.
+There are three breaks detected within the trend and one break in the seasonality. The break detection in 
+
+# Do the same thing to other records.
+
+# Have a look of all bfast output. Extract bfast output.
+# Get time when there is a change in trend or seasonality.
+# Store the bfast output for further analyses.
+
+# Perform bfastmonitoring, try to start the monitoring period at different time. 
+# Try to understand the differences between bfast monitoring and bfast (theory).
+# Use edit(), fix() to see the function of bfast or bfast monitoring (e.g. fix(bfastmonitoring).
+
+
+
+
