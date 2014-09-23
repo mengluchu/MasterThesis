@@ -187,6 +187,7 @@ history_roc <- function(formula, data, level = 0.05) {
   } else {
     1    
   }
+  # returning the 
   data$time[y_start]
 }
 ```
