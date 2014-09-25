@@ -179,15 +179,18 @@ history_roc <- function(formula, data, level = 0.05) {
   # sctest() performs a structural change test. If the p value of the test testing that
   # there is a strucural change is lower than the significance level the start time for the
   # history is initialized with the corresponding index. If no structural change is detected
-  # the start of the history period is set to the first index (all the data until to the beginning
-  #of the monitoring period is stable).
+  # the start of the history period is set to the first index (all the data until to the
+  # beginning of the monitoring period is most likely stable).
   y_start <- if(sctest(y_rcus)$p.value < level) {
-    # Number of all measurements minus the minimum index of the set of measurements of the CUSUM process that exeeds the threshold/boundary.
+    # Length of all measurements minus the minimum index of the set of measurements of
+    # the CUSUM process that exeeds the threshold/boundary yielding the index where a structural
+    # break was detected. By adding 1 to this index the start time is set to one step behind
+    # the break detected.
     length(y_rcus$process) - min(which(abs(y_rcus$process)[-1] > boundary(y_rcus)[-1])) + 1
   } else {
     1    
   }
-  # returning the 
+  # returning the start time of the history period.
   data$time[y_start]
 }
 ```
