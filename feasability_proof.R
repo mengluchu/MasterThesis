@@ -32,14 +32,6 @@ matogrosso$evi = lapply(matogrosso$evi, function(x) lapply(x, function (x) as.nu
 matogrosso$evio = strsplit(as.vector(matogrosso$evio), ';')
 matogrosso$evio = lapply(matogrosso$evio, function(x) lapply(x, function (x) as.numeric(x)))
 
-timeseriesEvio = ts(unlist((matogrosso$evio[1])), c(2000, 6), frequency=23)
-timeseriesEvi = ts(unlist((matogrosso$evi[1])), c(2000, 6), frequency=23)
-
-plot(timeseries)
-
-# get the registered date of an event related to the sample (dateevent) and start monitoring before this event
-dateevent = as.Date(as.vector(matogrosso$dateevent[1]))
-
 # function for converting from the registered DETER event to a c(period, cycle) structure
 dateToPeriodCycle = function(date){
   period = as.numeric(format(date, "%Y"))
@@ -53,11 +45,40 @@ numericDateToPeriodCycle = function(numericDate, freq){
   c(floor(numericDate), round((numericDate - floor(numericDate)) * freq) + 1)
 }
 
-timeAsPeriodCycle = dateToPeriodCycle(dateevent)
+# init vectors for output dataframe
+dateeventVector = c() 
+dateeventAsPeriodCycleVector = c()
+timebrpEvioVector = c()
+timebrpEviVector = c()
+bfmEvioVector = c()
+bfmEviVector = c()
 
-# going back 5 measurements before the time of the event
-timeBeforeEvent = c(timeAsPeriodCycle[1], timeAsPeriodCycle[2] - 10)
+for (i in c(1:2951)) {
+  timeseriesEvio = ts(unlist((matogrosso$evio[i])), c(2000, 6), frequency=23)
+  timeseriesEvi = ts(unlist((matogrosso$evi[i])), c(2000, 6), frequency=23)
+  
+  # get the registered date of an event related to the sample (dateevent) and start monitoring before this event
+  dateevent = as.Date(as.vector(matogrosso$dateevent[i]))
+  dateeventVector[i] = dateevent
+  
+  # convert registered date of an event to c(period, cycle) representation
+  dateeventAsPeriodCycle = dateToPeriodCycle(dateevent)
+  dateeventAsPeriodCycleVector[i] = dateeventAsPeriodCycle
+  
+  # going back 5 measurements before the time of the event
+  timeBeforeEvent = c(timeAsPeriodCycle[1], timeAsPeriodCycle[2] - 5)
+  
+  bfmEvio = bfastmonitor(timeseriesEvio, start=timeBeforeEvent)
+  bfmEvioVector[i] = bfmEvio
+  timebrpEvio = bfmEvio$breakpoint
+  timebrpEvioVector[i] = timebrpEvio
+  
+  bfmEvi = bfastmonitor(timeseriesEvi, start=timeBeforeEvent)
+  bfmEviVector[i] = bfmEvi
+  timebrpEvi = bfmEvi$breakpoint
+  timebrpEviVector[i] = timebrpEvi  
+}
 
-bfm = bfastmonitor(timeseries, start=timeBeforeEvent)
-bfm
-plot(bfm)
+output = data.frame(dateeventVector, dateeventAsPeriodCycleVector, timebrpEvioVector,
+                    timebrpEviVector, bfmEvioVector, bfmEviVector)
+
