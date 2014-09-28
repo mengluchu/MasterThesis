@@ -7,7 +7,7 @@ library(sp)
 
 newmap <- getMap(resolution = "low")
 plot(newmap, asp = 1)
-points(lon, lat, col = "red", cex = .6)
+points(lon, lat, col = "red", cex = .6) # is that going to be a problem: the map uses WGS84 datum, the deter data use SAD ?
 
 # getting the bounding box
 deter2 = deter
