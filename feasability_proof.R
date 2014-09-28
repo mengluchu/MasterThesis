@@ -53,24 +53,25 @@ timebrpEviVector = c()
 bfmEvioVector = c()
 bfmEviVector = c()
 
-for (i in c(1:2951)) {
+for (i in 1:2951) {
   timeseriesEvio = ts(unlist((matogrosso$evio[i])), c(2000, 6), frequency=23)
   timeseriesEvi = ts(unlist((matogrosso$evi[i])), c(2000, 6), frequency=23)
   
   # get the registered date of an event related to the sample (dateevent) and start monitoring before this event
-  dateevent = as.Date(as.vector(matogrosso$dateevent[i]))
-  dateeventVector[i] = dateevent
+  #dateevent = as.Date(as.vector(matogrosso$dateevent[i]))
+  #dateeventVector[i] = dateevent
+  dateevent = as.Date(as.vector(matogrosso$dateevent[i]),format="%m/%d/%Y")
   
   # convert registered date of an event to c(period, cycle) representation
   dateeventAsPeriodCycle = dateToPeriodCycle(dateevent)
   dateeventAsPeriodCycleVector[i] = dateeventAsPeriodCycle
   
   # going back 5 measurements before the time of the event
-  timeBeforeEvent = c(timeAsPeriodCycle[1], timeAsPeriodCycle[2] - 5)
+  timeBeforeEvent = c(timeAsPeriodCycle[1], timeAsPeriodCycle[2] - 5) # timeAs Periodcycle is missing
   
-  bfmEvio = bfastmonitor(timeseriesEvio, start=timeBeforeEvent)
-  bfmEvioVector[i] = bfmEvio
-  timebrpEvio = bfmEvio$breakpoint
+  bfmEvio = bfastmonitor(timeseriesEvio, start=timeBeforeEvent) #better do a clearer way: start =c(a, b)
+  bfmEvioVector[i] = bfmEvio # not likely to work
+  timebrpEvio = bfmEvio$breakpoint 
   timebrpEvioVector[i] = timebrpEvio
   
   bfmEvi = bfastmonitor(timeseriesEvi, start=timeBeforeEvent)
